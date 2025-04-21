@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2021",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "incremental": true,
+    "skipLibCheck": true,
+    
+    /* Type Checking */
+    "strictNullChecks": false,        /* Giảm nghiêm ngặt về kiểm tra null/undefined */
+    "noImplicitAny": false,           /* Cho phép kiểu any ngầm định */
+    "strictBindCallApply": false,     /* Không yêu cầu kiểm tra nghiêm ngặt khi sử dụng bind/call/apply */
+    "strictFunctionTypes": false,     /* Không kiểm tra nghiêm ngặt kiểu hàm */
+    "strictPropertyInitialization": false, /* Không yêu cầu khởi tạo thuộc tính trong class */
+    "noFallthroughCasesInSwitch": false,
+    
+    /* Additional Settings */
+    "forceConsistentCasingInFileNames": true, /* Đảm bảo tên file nhất quán */
+    "noImplicitThis": false,                 /* Không yêu cầu kiểu cho 'this' */
+    "useUnknownInCatchVariables": false      /* Sử dụng 'any' thay vì 'unknown' trong catch */
+  }
+}

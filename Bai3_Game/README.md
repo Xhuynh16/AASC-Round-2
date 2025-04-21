@@ -26,9 +26,16 @@ cd backend
 npm install
 ```
 
-3. Cơ sở dữ liệu (SQLite) đã được cấu hình sẵn và sẽ tự động được tạo khi khởi động. File cơ sở dữ liệu sẽ được lưu tại `backend/database/game.db`.
+3. Tạo file `.env` trong thư mục backend với nội dung sau:
+```plaintext
+JWT_SECRET=f67b88d4-7dc5-4cb5-a001-2b2e7e587931
+DATABASE_PATH=database/game.db
+PORT=3000
+```
 
-4. Khởi động máy chủ backend ở chế độ phát triển:
+4. Cơ sở dữ liệu (SQLite) đã được cấu hình sẵn và sẽ tự động được tạo khi khởi động. File cơ sở dữ liệu sẽ được lưu tại `backend/database/game.db`.
+
+5. Khởi động máy chủ backend ở chế độ phát triển:
 ```bash
 npm run start:dev
 ```

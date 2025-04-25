@@ -1,0 +1,19 @@
+{
+  "name": "bai3",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@nestjs/platform-socket.io": "^10.0.0",
+    "@nestjs/websockets": "^11.1.0",
+    "@types/passport-jwt": "^4.0.1",
+    "passport-jwt": "^4.0.1",
+    "socket.io": "^4.8.1"
+  }
+}

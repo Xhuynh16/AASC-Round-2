@@ -1,0 +1,86 @@
+<%- contentFor('body') %>
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <% if (error) { %>
+            <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+                <%= error %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <% } %>
+        
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">Đăng Ký</h4>
+            </div>
+            <div class="card-body">
+                <form action="/auth/register" method="POST">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Tên Đăng Nhập</label>
+                        <input type="text" class="form-control" id="username" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Mật Khẩu</label>
+                        <input type="password" class="form-control" id="password" name="password" required minlength="6">
+                        <div class="form-text">Mật khẩu phải có ít nhất 6 ký tự.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email (không bắt buộc)</label>
+                        <input type="email" class="form-control" id="email" name="email">
+                    </div>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Họ Tên Đầy Đủ (không bắt buộc)</label>
+                        <input type="text" class="form-control" id="name" name="name">
+                    </div>
+                    <div class="mb-3">
+                        <label for="age" class="form-label">Tuổi (không bắt buộc)</label>
+                        <input type="number" class="form-control" id="age" name="age" min="1" max="120">
+                    </div>
+                    <div class="mb-3">
+                        <label for="nickname" class="form-label">Biệt Danh (không bắt buộc)</label>
+                        <input type="text" class="form-control" id="nickname" name="nickname">
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success">Đăng Ký</button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer">
+                <p class="mb-0">Đã có tài khoản? <a href="/auth/login">Đăng nhập tại đây</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- contentFor('scripts') %>
+<script>
+    // Client-side validation
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        const email = document.getElementById('email').value.trim();
+        
+        if (!username || !password) {
+            e.preventDefault();
+            alert('Vui lòng nhập cả tên đăng nhập và mật khẩu');
+            return;
+        }
+        
+        if (password.length < 6) {
+            e.preventDefault();
+            alert('Mật khẩu phải có ít nhất 6 ký tự');
+            return;
+        }
+        
+        if (email && !validateEmail(email)) {
+            e.preventDefault();
+            alert('Vui lòng nhập địa chỉ email hợp lệ');
+            return;
+        }
+    });
+    
+    function validateEmail(email) {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(email);
+    }
+</script> 

@@ -1,0 +1,33 @@
+<%- contentFor('body') %>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card game-card">
+            <div class="card-body">
+                <h5 class="card-title">Line 98</h5>
+                <p class="card-text">Trò chơi xếp bóng cổ điển. Tạo các đường thẳng gồm 5 hoặc nhiều bóng để kiếm điểm.</p>
+                <a href="/games/line98" class="btn btn-primary">Chơi Ngay</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card game-card">
+            <div class="card-body">
+                <h5 class="card-title">Caro</h5>
+                <p class="card-text">Thách đấu với người chơi khác trong trò chơi cờ carô X và O.</p>
+                <a href="/games/tictactoe" class="btn btn-primary">Chơi Ngay</a>
+            </div>
+        </div>
+    </div>
+    <% if (locals.user) { %>
+    <div class="col-md-4">
+        <div class="card game-card">
+            <div class="card-body">
+                <h5 class="card-title">Hồ Sơ Của Tôi</h5>
+                <p class="card-text">Xem và cập nhật thông tin cá nhân cùng các cài đặt tài khoản của bạn.</p>
+                <a href="/users/profile" class="btn btn-success">Chỉnh Sửa Hồ Sơ</a>
+            </div>
+        </div>
+    </div>
+    <% } %>
+</div> 

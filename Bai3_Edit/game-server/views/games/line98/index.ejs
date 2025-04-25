@@ -1,0 +1,380 @@
+<%- contentFor('body') %>
+
+<div class="row mt-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">Line 98</h4>
+                <div>
+                    <span class="badge bg-light text-dark me-2">Score: <span id="scoreValue">0</span></span>
+                    <button class="btn btn-sm btn-light" id="newGameBtn">New Game</button>
+                </div>
+            </div>
+            <div class="card-body p-0 text-center">
+                <canvas id="gameCanvas" width="450" height="450"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">Game Controls</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>How to Play:</strong></p>
+                <ul>
+                    <li>Click a ball to select it</li>
+                    <li>Click an empty cell to move the ball</li>
+                    <li>Create lines of 5 or more balls of the same color</li>
+                    <li>Lines can be horizontal, vertical or diagonal</li>
+                </ul>
+                <button class="btn btn-warning w-100 mb-2" id="hintBtn">Hint</button>
+                <div class="alert alert-primary d-none" id="hintAlert">
+                    Hint will be shown here
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Coming Next</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-around" id="nextBallsContainer">
+                    <div class="next-ball" id="nextBall0"></div>
+                    <div class="next-ball" id="nextBall1"></div>
+                    <div class="next-ball" id="nextBall2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- contentFor('stylesheets') %>
+<style>
+    #gameCanvas {
+        background-color: #f0f0f0;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        cursor: pointer;
+    }
+    .next-ball {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #ccc;
+        display: inline-block;
+    }
+</style>
+
+<%- contentFor('scripts') %>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Game constants
+        const BOARD_SIZE = 9;
+        const CELL_SIZE = 50;
+        const BALL_RADIUS = 20;
+        const BALL_COLORS = [
+            '#FF5252', // red
+            '#FFEB3B', // yellow
+            '#2196F3', // blue
+            '#4CAF50', // green
+            '#9C27B0', // purple
+            '#FF9800', // orange
+            '#607D8B'  // blue-grey
+        ];
+        
+        // Game variables
+        let socket;
+        let gameState = null;
+        let selectedBall = null;
+        let animationInProgress = false;
+        let pathAnimation = null;
+        
+        // Canvas setup
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Socket.io connection
+        function initSocket() {
+            socket = io('/line98');
+            
+            socket.on('connect', () => {
+                console.log('Connected to server');
+            });
+            
+            socket.on('gameState', (state) => {
+                gameState = state;
+                updateNextBallsView();
+                updateScore();
+                drawBoard();
+            });
+            
+            socket.on('invalidMove', (data) => {
+                showMessage(data.message, 'warning');
+            });
+            
+            socket.on('hint', (data) => {
+                if (data.message) {
+                    document.getElementById('hintAlert').textContent = data.message;
+                    document.getElementById('hintAlert').classList.remove('d-none');
+                    return;
+                }
+                
+                // Show hint animation
+                showHint(data.from, data.to);
+            });
+        }
+        
+        // Game rendering
+        function drawBoard() {
+            if (!gameState) return;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw grid
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 1;
+            
+            for (let i = 0; i <= BOARD_SIZE; i++) {
+                // Vertical lines
+                ctx.beginPath();
+                ctx.moveTo(i * CELL_SIZE, 0);
+                ctx.lineTo(i * CELL_SIZE, BOARD_SIZE * CELL_SIZE);
+                ctx.stroke();
+                
+                // Horizontal lines
+                ctx.beginPath();
+                ctx.moveTo(0, i * CELL_SIZE);
+                ctx.lineTo(BOARD_SIZE * CELL_SIZE, i * CELL_SIZE);
+                ctx.stroke();
+            }
+            
+            // Draw balls
+            for (let y = 0; y < BOARD_SIZE; y++) {
+                for (let x = 0; x < BOARD_SIZE; x++) {
+                    const cell = gameState.board[y][x];
+                    
+                    if (cell.color) {
+                        drawBall(x, y, cell.color - 1, cell.isNewBall);
+                    }
+                    
+                    // Highlight selected ball
+                    if (selectedBall && selectedBall.x === x && selectedBall.y === y) {
+                        drawSelection(x, y);
+                    }
+                }
+            }
+        }
+        
+        function drawBall(x, y, colorIndex, isNew = false) {
+            const centerX = x * CELL_SIZE + CELL_SIZE / 2;
+            const centerY = y * CELL_SIZE + CELL_SIZE / 2;
+            const radius = isNew ? BALL_RADIUS * 0.8 : BALL_RADIUS;
+            
+            // Draw ball
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            ctx.fillStyle = BALL_COLORS[colorIndex];
+            ctx.fill();
+            
+            // Draw highlight effect
+            ctx.beginPath();
+            ctx.arc(centerX - radius/3, centerY - radius/3, radius/3, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.fill();
+            
+            // Draw border
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Show animation for new balls
+            if (isNew) {
+                animateNewBall(x, y, colorIndex);
+            }
+        }
+        
+        function drawSelection(x, y) {
+            const centerX = x * CELL_SIZE + CELL_SIZE / 2;
+            const centerY = y * CELL_SIZE + CELL_SIZE / 2;
+            
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, BALL_RADIUS + 5, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(255, 255, 0, 0.7)';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+        
+        function animateNewBall(x, y, colorIndex) {
+            let scale = 0.3;
+            const centerX = x * CELL_SIZE + CELL_SIZE / 2;
+            const centerY = y * CELL_SIZE + CELL_SIZE / 2;
+            
+            const growAnimation = setInterval(() => {
+                scale += 0.05;
+                if (scale >= 1) {
+                    clearInterval(growAnimation);
+                    return;
+                }
+                
+                // Clear cell
+                ctx.clearRect(
+                    x * CELL_SIZE + 1, 
+                    y * CELL_SIZE + 1, 
+                    CELL_SIZE - 2, 
+                    CELL_SIZE - 2
+                );
+                
+                // Draw growing ball
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, BALL_RADIUS * scale, 0, Math.PI * 2);
+                ctx.fillStyle = BALL_COLORS[colorIndex];
+                ctx.fill();
+                
+                // Draw highlight
+                ctx.beginPath();
+                ctx.arc(centerX - BALL_RADIUS * scale/3, centerY - BALL_RADIUS * scale/3, BALL_RADIUS * scale/3, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.fill();
+            }, 50);
+        }
+        
+        function showHint(from, to) {
+            // Highlight the "from" ball
+            const originalSelectedBall = selectedBall;
+            selectedBall = from;
+            drawBoard();
+            
+            // Add a delay then show path animation
+            setTimeout(() => {
+                animatePath(from, to);
+            }, 500);
+            
+            // After animation, restore original selection
+            setTimeout(() => {
+                selectedBall = originalSelectedBall;
+                drawBoard();
+                document.getElementById('hintAlert').classList.add('d-none');
+            }, 2500);
+        }
+        
+        function animatePath(from, to) {
+            // This is a simplified path animation
+            const startX = from.x * CELL_SIZE + CELL_SIZE / 2;
+            const startY = from.y * CELL_SIZE + CELL_SIZE / 2;
+            const endX = to.x * CELL_SIZE + CELL_SIZE / 2;
+            const endY = to.y * CELL_SIZE + CELL_SIZE / 2;
+            
+            const colorIndex = gameState.board[from.y][from.x].color - 1;
+            
+            let progress = 0;
+            const animationStep = 0.02;
+            
+            if (pathAnimation) clearInterval(pathAnimation);
+            
+            pathAnimation = setInterval(() => {
+                progress += animationStep;
+                if (progress >= 1) {
+                    clearInterval(pathAnimation);
+                    return;
+                }
+                
+                // Redraw board to clear previous frame
+                drawBoard();
+                
+                // Draw a moving ball along the path
+                const x = startX + (endX - startX) * progress;
+                const y = startY + (endY - startY) * progress;
+                
+                ctx.beginPath();
+                ctx.arc(x, y, BALL_RADIUS * 0.7, 0, Math.PI * 2);
+                ctx.fillStyle = BALL_COLORS[colorIndex];
+                ctx.fill();
+                
+                // Draw highlight
+                ctx.beginPath();
+                ctx.arc(x - BALL_RADIUS * 0.2, y - BALL_RADIUS * 0.2, BALL_RADIUS * 0.2, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.fill();
+            }, 30);
+        }
+        
+        function updateNextBallsView() {
+            if (!gameState || !gameState.nextColors) return;
+            
+            for (let i = 0; i < gameState.nextColors.length; i++) {
+                const ballElement = document.getElementById(`nextBall${i}`);
+                if (ballElement) {
+                    const colorIndex = gameState.nextColors[i] - 1;
+                    ballElement.style.backgroundColor = BALL_COLORS[colorIndex];
+                }
+            }
+        }
+        
+        function updateScore() {
+            if (!gameState) return;
+            document.getElementById('scoreValue').textContent = gameState.score;
+        }
+        
+        function showMessage(message, type = 'info') {
+            alert(message);
+        }
+        
+        // Events
+        canvas.addEventListener('click', (e) => {
+            if (animationInProgress || !gameState) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor((e.clientX - rect.left) / CELL_SIZE);
+            const y = Math.floor((e.clientY - rect.top) / CELL_SIZE);
+            
+            // Bounds check
+            if (x < 0 || x >= BOARD_SIZE || y < 0 || y >= BOARD_SIZE) return;
+            
+            const clickedCell = gameState.board[y][x];
+            
+            // If no ball is selected and clicked on a ball, select it
+            if (!selectedBall && clickedCell.color) {
+                selectedBall = { x, y };
+                drawBoard();
+                return;
+            }
+            
+            // If a ball is selected and clicked on another ball, change selection
+            if (selectedBall && clickedCell.color) {
+                selectedBall = { x, y };
+                drawBoard();
+                return;
+            }
+            
+            // If a ball is selected and clicked on an empty cell, try to move
+            if (selectedBall && !clickedCell.color) {
+                const from = gameState.board[selectedBall.y][selectedBall.x];
+                const to = clickedCell;
+                
+                // Send move to server
+                socket.emit('move', { from, to });
+                
+                // Reset selection
+                selectedBall = null;
+                return;
+            }
+        });
+        
+        document.getElementById('newGameBtn').addEventListener('click', () => {
+            socket.emit('newGame');
+            selectedBall = null;
+        });
+        
+        document.getElementById('hintBtn').addEventListener('click', () => {
+            socket.emit('hint');
+            document.getElementById('hintAlert').textContent = 'Finding best move...';
+            document.getElementById('hintAlert').classList.remove('d-none');
+        });
+        
+        // Initialize the game
+        initSocket();
+    });
+</script> 

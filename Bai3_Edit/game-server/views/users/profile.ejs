@@ -1,0 +1,105 @@
+<%- contentFor('body') %>
+
+<div class="row mt-4">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Hồ Sơ Người Dùng</h4>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h5>Thông Tin Tài Khoản</h5>
+                        <p><strong>Tên đăng nhập:</strong> <%= user.username %></p>
+                        <p><strong>Email:</strong> <%= user.email || 'Chưa thiết lập' %></p>
+                        <p><strong>Ngày tạo tài khoản:</strong> <%= new Date(user.createdAt).toLocaleDateString() %></p>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Thông Tin Cá Nhân</h5>
+                        <p><strong>Họ tên đầy đủ:</strong> <%= user.name || 'Chưa thiết lập' %></p>
+                        <p><strong>Biệt danh:</strong> <%= user.nickname || 'Chưa thiết lập' %></p>
+                        <p><strong>Tuổi:</strong> <%= user.age || 'Chưa thiết lập' %></p>
+                    </div>
+                </div>
+                
+                <div class="accordion" id="profileAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingOne">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                                Cập Nhật Hồ Sơ
+                            </button>
+                        </h2>
+                        <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#profileAccordion">
+                            <div class="accordion-body">
+                                <form action="/users/profile" method="POST" id="updateProfileForm">
+                                    <input type="hidden" name="_method" value="PATCH">
+                                    <div class="mb-3">
+                                        <label for="email" class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="email" name="email" value="<%= user.email || '' %>">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="name" class="form-label">Họ Tên Đầy Đủ</label>
+                                        <input type="text" class="form-control" id="name" name="name" value="<%= user.name || '' %>">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="nickname" class="form-label">Biệt Danh</label>
+                                        <input type="text" class="form-control" id="nickname" name="nickname" value="<%= user.nickname || '' %>">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="age" class="form-label">Tuổi</label>
+                                        <input type="number" class="form-control" id="age" name="age" min="1" max="120" value="<%= user.age || '' %>">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Cập Nhật Hồ Sơ</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- contentFor('scripts') %>
+<script>
+    // Handle form submission with PATCH method
+    document.getElementById('updateProfileForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => {
+            if (key !== '_method') {
+                // Convert age to number if not empty
+                if (key === 'age' && value !== '') {
+                    data[key] = parseInt(value, 10);
+                } else {
+                    data[key] = value;
+                }
+            }
+        });
+
+        console.log('Sending data:', data); // Debug log to see what's being sent
+
+        fetch('/users/profile', {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                response.text().then(text => {
+                    console.error('Error response:', text);
+                    alert('Không thể cập nhật hồ sơ. Lỗi: ' + text);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Đã xảy ra lỗi khi cập nhật hồ sơ.');
+        });
+    });
+</script> 

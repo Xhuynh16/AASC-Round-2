@@ -1,0 +1,22 @@
+<%- contentFor('body') %>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <h2>Available Games</h2>
+        <p class="lead">Choose a game to play</p>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <% games.forEach(game => { %>
+        <div class="col-md-6 col-lg-4">
+            <div class="card game-card">
+                <div class="card-body">
+                    <h5 class="card-title"><%= game.name %></h5>
+                    <p class="card-text"><%= game.description %></p>
+                    <a href="<%= game.path %>" class="btn btn-primary">Play Now</a>
+                </div>
+            </div>
+        </div>
+    <% }) %>
+</div> 

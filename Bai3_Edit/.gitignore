@@ -32,10 +32,6 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 
-# Database
-*.sqlite
-*.sqlite3
-
 # Tests
 /coverage
 /.nyc_output 

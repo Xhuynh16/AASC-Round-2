@@ -81,18 +81,3 @@ Dự án tuân theo kiến trúc NestJS tiêu chuẩn:
 
 Ứng dụng sử dụng SQLite để lưu trữ dữ liệu. Tệp cơ sở dữ liệu được đặt tại `game-server/db/game_server.sqlite`.
 
-## Kiểm Thử
-
-Chạy kiểm thử với:
-```
-npm run test
-```
-
-Chạy kiểm thử end-to-end:
-```
-npm run test:e2e
-```
-
-## Giấy Phép
-
-Dự án này được cấp phép theo Giấy Phép MIT. 
